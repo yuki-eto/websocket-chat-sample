@@ -2,9 +2,10 @@ package dao
 
 import (
 	"fmt"
-	"github.com/juju/errors"
 	"sync"
 	"websocket-chat-sample/entity"
+
+	"github.com/juju/errors"
 )
 
 type UserDao interface {
@@ -14,20 +15,21 @@ type UserDao interface {
 }
 
 type UserDaoImpl struct {
-	mtx *sync.Mutex
-	users map[uint64]*entity.User
+	mtx         *sync.Mutex
+	users       map[uint64]*entity.User
 	userByToken map[string]*entity.User
 
-	sequence uint64
+	sequence    uint64
 	sequenceMtx *sync.Mutex
 }
+
 func NewUserDao() UserDao {
 	return &UserDaoImpl{
-		mtx: new(sync.Mutex),
-		users: make(map[uint64]*entity.User),
+		mtx:         new(sync.Mutex),
+		users:       make(map[uint64]*entity.User),
 		userByToken: make(map[string]*entity.User),
 
-		sequence: 0,
+		sequence:    0,
 		sequenceMtx: new(sync.Mutex),
 	}
 }
@@ -63,6 +65,3 @@ func (u *UserDaoImpl) FindByToken(token string) (*entity.User, error) {
 	user := u.userByToken[token]
 	return user, nil
 }
-
-
-

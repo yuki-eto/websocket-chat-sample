@@ -2,14 +2,16 @@ package repository
 
 import (
 	"fmt"
-	"github.com/juju/errors"
 	"websocket-chat-sample/dao"
 	"websocket-chat-sample/entity"
+
+	"github.com/juju/errors"
 )
 
 type UserInstance struct {
 	*entity.User
 }
+
 func NewUserInstance(user *entity.User) *UserInstance {
 	return &UserInstance{
 		User: user,
@@ -19,6 +21,7 @@ func NewUserInstance(user *entity.User) *UserInstance {
 type UsersInstance struct {
 	values map[uint64]*UserInstance
 }
+
 func NewUsersInstance() *UsersInstance {
 	users := new(UsersInstance)
 	users.Clear()
@@ -63,6 +66,7 @@ type UserRepository interface {
 type UserRepositoryImpl struct {
 	userDao dao.UserDao
 }
+
 func NewUserRepository() UserRepository {
 	return &UserRepositoryImpl{
 		userDao: dao.NewUserDao(),

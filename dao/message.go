@@ -2,9 +2,10 @@ package dao
 
 import (
 	"container/list"
-	"github.com/juju/errors"
 	"sync"
 	"websocket-chat-sample/entity"
+
+	"github.com/juju/errors"
 )
 
 type MessagesStore struct {
@@ -12,6 +13,7 @@ type MessagesStore struct {
 	storeByRoom map[string]*list.List
 	mtxByRoom   map[string]*sync.Mutex
 }
+
 func NewMessageStore() *MessagesStore {
 	return &MessagesStore{
 		mtx:         new(sync.Mutex),
@@ -68,6 +70,7 @@ type MessageDao interface {
 type MessageDaoImpl struct {
 	store *MessagesStore
 }
+
 func NewMessageDao() MessageDao {
 	return &MessageDaoImpl{
 		store: NewMessageStore(),

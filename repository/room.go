@@ -1,14 +1,16 @@
 package repository
 
 import (
-	"github.com/juju/errors"
 	"websocket-chat-sample/dao"
 	"websocket-chat-sample/entity"
+
+	"github.com/juju/errors"
 )
 
 type RoomInstance struct {
 	*entity.Room
 }
+
 func NewRoomInstance(room *entity.Room) *RoomInstance {
 	return &RoomInstance{
 		Room: room,

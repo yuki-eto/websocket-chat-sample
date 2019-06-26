@@ -1,9 +1,10 @@
 package dao
 
 import (
-	"github.com/juju/errors"
 	"sync"
 	"websocket-chat-sample/entity"
+
+	"github.com/juju/errors"
 )
 
 type RoomDao interface {
@@ -12,12 +13,13 @@ type RoomDao interface {
 }
 
 type RoomDaoImpl struct {
-	mtx *sync.Mutex
+	mtx   *sync.Mutex
 	rooms map[string]*entity.Room
 }
+
 func NewRoomDao() RoomDao {
 	return &RoomDaoImpl{
-		mtx: new(sync.Mutex),
+		mtx:   new(sync.Mutex),
 		rooms: make(map[string]*entity.Room),
 	}
 }

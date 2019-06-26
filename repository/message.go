@@ -1,14 +1,16 @@
 package repository
 
 import (
-	"github.com/juju/errors"
 	"websocket-chat-sample/dao"
 	"websocket-chat-sample/entity"
+
+	"github.com/juju/errors"
 )
 
 type MessageInstance struct {
 	*entity.Message
 }
+
 func NewMessageInstance(message *entity.Message) *MessageInstance {
 	return &MessageInstance{
 		Message: message,
@@ -18,6 +20,7 @@ func NewMessageInstance(message *entity.Message) *MessageInstance {
 type MessagesInstance struct {
 	values []*MessageInstance
 }
+
 func NewMessagesInstance(entities []*entity.Message) *MessagesInstance {
 	messages := new(MessagesInstance)
 	for _, e := range entities {
@@ -40,6 +43,7 @@ type MessageRepository interface {
 type MessageRepositoryImpl struct {
 	messageDao dao.MessageDao
 }
+
 func NewMessageRepository() MessageRepository {
 	return &MessageRepositoryImpl{
 		messageDao: dao.NewMessageDao(),
