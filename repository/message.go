@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"encoding/json"
 	"websocket-chat-sample/dao"
 	"websocket-chat-sample/entity"
 
@@ -34,8 +35,14 @@ func (m *MessagesInstance) Clear() {
 func (m *MessagesInstance) Add(msg *MessageInstance) {
 	m.values = append(m.values, msg)
 }
+func (m *MessagesInstance) MarshalJSON() ([]byte, error) {
+	b, err := json.Marshal(m.values)
+	return b, errors.Trace(err)
+}
 
 type MessageRepository interface {
+	Create(string) error
+	Delete(string) error
 	FindByRoomID(string) (*MessagesInstance, error)
 	Push(*entity.Message) error
 }
@@ -50,6 +57,13 @@ func NewMessageRepository() MessageRepository {
 	}
 }
 
+func (r *MessageRepositoryImpl) Create(id string) error {
+	r.messageDao.Create(id)
+	return nil
+}
+func (r *MessageRepositoryImpl) Delete(id string) error {
+	return errors.Trace(r.messageDao.Delete(id))
+}
 func (r *MessageRepositoryImpl) FindByRoomID(id string) (*MessagesInstance, error) {
 	msgs, err := r.messageDao.FindByRoomID(id)
 	if err != nil {

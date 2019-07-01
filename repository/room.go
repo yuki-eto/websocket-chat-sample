@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"encoding/json"
 	"websocket-chat-sample/dao"
 	"websocket-chat-sample/entity"
 
@@ -9,16 +10,45 @@ import (
 
 type RoomInstance struct {
 	*entity.Room
+
+	isCreated bool
+	users     *UsersInstance
 }
 
 func NewRoomInstance(room *entity.Room) *RoomInstance {
 	return &RoomInstance{
 		Room: room,
+
+		isCreated: false,
+		users:     NewUsersInstance(),
 	}
 }
 
+func (r *RoomInstance) MarshalJSON() ([]byte, error) {
+	b, err := json.Marshal(r.Room)
+	return b, errors.Trace(err)
+}
+
+func (r *RoomInstance) AddUser(user *UserInstance) {
+	r.users.Set(user)
+}
+func (r *RoomInstance) DelUser(userID uint64) {
+	r.users.Delete(userID)
+}
+func (r *RoomInstance) ListUsers() []*UserInstance {
+	return r.users.List()
+}
+func (r *RoomInstance) Broadcast(msg interface{}) {
+	r.users.Broadcast(msg)
+}
+func (r *RoomInstance) Close() {
+	// TODO: ルーム閉じる時に必要な処理を入れる
+}
+
 type RoomRepository interface {
-	Create(string, string) (*RoomInstance, error)
+	Create(*RoomInstance) error
+	Save(*RoomInstance) error
+	Delete(*RoomInstance) error
 	FindByID(string) (*RoomInstance, error)
 }
 
@@ -32,12 +62,24 @@ func NewRoomRepository() RoomRepository {
 	}
 }
 
-func (r *RoomRepositoryImpl) Create(id, name string) (*RoomInstance, error) {
-	room := &entity.Room{ID: id, Name: name}
-	if err := r.roomDao.Create(room); err != nil {
-		return nil, errors.Trace(err)
+func (r *RoomRepositoryImpl) Create(room *RoomInstance) error {
+	if err := r.roomDao.Create(room.Room); err != nil {
+		return errors.Trace(err)
 	}
-	return NewRoomInstance(room), nil
+	room.isCreated = true
+	return nil
+}
+
+func (r *RoomRepositoryImpl) Save(room *RoomInstance) error {
+	if !room.isCreated {
+		return errors.Trace(r.Create(room))
+	}
+	return errors.Trace(r.roomDao.Update(room.Room))
+}
+
+func (r *RoomRepositoryImpl) Delete(room *RoomInstance) error {
+	room.Close()
+	return errors.Trace(r.roomDao.Delete(room.ID))
 }
 
 func (r *RoomRepositoryImpl) FindByID(id string) (*RoomInstance, error) {
@@ -48,5 +90,7 @@ func (r *RoomRepositoryImpl) FindByID(id string) (*RoomInstance, error) {
 	if room == nil {
 		return nil, errors.NewNotFound(nil, id)
 	}
-	return NewRoomInstance(room), nil
+	instance := NewRoomInstance(room)
+	instance.isCreated = true
+	return instance, nil
 }

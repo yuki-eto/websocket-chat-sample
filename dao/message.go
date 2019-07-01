@@ -9,37 +9,48 @@ import (
 )
 
 type MessagesStore struct {
-	mtx         *sync.Mutex
-	storeByRoom map[string]*list.List
-	mtxByRoom   map[string]*sync.Mutex
+	storeByRoom *sync.Map
+	mtxByRoom   *sync.Map
 }
 
 func NewMessageStore() *MessagesStore {
 	return &MessagesStore{
-		mtx:         new(sync.Mutex),
-		storeByRoom: make(map[string]*list.List),
-		mtxByRoom:   make(map[string]*sync.Mutex),
+		storeByRoom: new(sync.Map),
+		mtxByRoom:   new(sync.Map),
 	}
 }
 func (m *MessagesStore) New(roomID string) {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-	if _, exists := m.storeByRoom[roomID]; !exists {
-		m.storeByRoom[roomID] = list.New()
+	if _, exists := m.storeByRoom.Load(roomID); !exists {
+		m.storeByRoom.Store(roomID, list.New())
 	}
-	if _, exists := m.mtxByRoom[roomID]; !exists {
-		m.mtxByRoom[roomID] = new(sync.Mutex)
+	if _, exists := m.mtxByRoom.Load(roomID); !exists {
+		m.mtxByRoom.Store(roomID, new(sync.RWMutex))
 	}
+}
+func (m *MessagesStore) getList(roomID string) *list.List {
+	l, ok := m.storeByRoom.Load(roomID)
+	if !ok {
+		return nil
+	}
+	return l.(*list.List)
+}
+func (m *MessagesStore) getMutex(roomID string) *sync.RWMutex {
+	mtx, ok := m.mtxByRoom.Load(roomID)
+	if !ok {
+		return nil
+	}
+	return mtx.(*sync.RWMutex)
 }
 func (m *MessagesStore) Push(msg *entity.Message) error {
 	roomID := msg.RoomID
-	store, exists := m.storeByRoom[roomID]
-	if !exists {
-		return errors.New("cannot find list")
+
+	store := m.getList(roomID)
+	if store == nil {
+		return errors.NewNotFound(nil, "cannot find store")
 	}
-	mtx, exists := m.mtxByRoom[roomID]
-	if !exists {
-		return errors.New("cannot find mutex")
+	mtx := m.getMutex(roomID)
+	if mtx == nil {
+		return errors.NewNotFound(nil, "cannot find mutex")
 	}
 
 	mtx.Lock()
@@ -49,21 +60,34 @@ func (m *MessagesStore) Push(msg *entity.Message) error {
 	return nil
 }
 func (m *MessagesStore) List(roomID string) (list []*entity.Message, err error) {
-	store, exists := m.storeByRoom[roomID]
-	if !exists {
-		return list, errors.NewNotFound(nil, roomID)
+	store := m.getList(roomID)
+	if store == nil {
+		return list, errors.NewNotFound(nil, "cannot find store")
+	}
+	mtx := m.getMutex(roomID)
+	if mtx == nil {
+		return nil, errors.NewNotFound(nil, "cannot find mutex")
 	}
 
+	mtx.RLock()
 	for elm := store.Front(); elm != nil; elm = elm.Next() {
 		msg := elm.Value.(*entity.Message)
 		list = append(list, msg)
 	}
+	mtx.RUnlock()
+
 	return list, nil
+}
+func (m *MessagesStore) Delete(roomID string) error {
+	m.storeByRoom.Delete(roomID)
+	m.mtxByRoom.Delete(roomID)
+	return nil
 }
 
 type MessageDao interface {
 	Create(string)
 	Push(*entity.Message) error
+	Delete(string) error
 	FindByRoomID(string) ([]*entity.Message, error)
 }
 
@@ -71,14 +95,23 @@ type MessageDaoImpl struct {
 	store *MessagesStore
 }
 
-func NewMessageDao() MessageDao {
-	return &MessageDaoImpl{
+var messageDao *MessageDaoImpl
+
+func init() {
+	messageDao = &MessageDaoImpl{
 		store: NewMessageStore(),
 	}
 }
 
+func NewMessageDao() MessageDao {
+	return messageDao
+}
+
 func (m *MessageDaoImpl) Create(roomID string) {
 	m.store.New(roomID)
+}
+func (m *MessageDaoImpl) Delete(roomID string) error {
+	return errors.Trace(m.store.Delete(roomID))
 }
 func (m *MessageDaoImpl) Push(msg *entity.Message) error {
 	return errors.Trace(m.store.Push(msg))
