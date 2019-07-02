@@ -5,22 +5,42 @@ import (
 	"websocket-chat-sample/dao"
 	"websocket-chat-sample/entity"
 
+	"github.com/cornelk/hashmap"
 	"github.com/juju/errors"
 )
 
-type RoomInstance struct {
-	*entity.Room
-
-	isCreated bool
-	users     *UsersInstance
+type roomUsers struct {
+	m *hashmap.HashMap
 }
 
-func NewRoomInstance(room *entity.Room) *RoomInstance {
-	return &RoomInstance{
-		Room: room,
+func (r *roomUsers) New(roomID string) {
+	r.m.Insert(roomID, NewUsersInstance())
+}
+func (r *roomUsers) Get(roomID string) *UsersInstance {
+	users, ok := r.m.Get(roomID)
+	if !ok {
+		return nil
+	}
+	return users.(*UsersInstance)
+}
 
+var users *roomUsers
+
+func init() {
+	users = &roomUsers{m: &hashmap.HashMap{}}
+}
+
+type RoomInstance struct {
+	*entity.Room
+	users     *UsersInstance
+	isCreated bool
+}
+
+func NewRoomInstance(room *entity.Room, users *UsersInstance) *RoomInstance {
+	return &RoomInstance{
+		Room:      room,
+		users:     users,
 		isCreated: false,
-		users:     NewUsersInstance(),
 	}
 }
 
@@ -29,7 +49,7 @@ func (r *RoomInstance) MarshalJSON() ([]byte, error) {
 	return b, errors.Trace(err)
 }
 
-func (r *RoomInstance) AddUser(user *UserInstance) {
+func (r *RoomInstance) SetUser(user *UserInstance) {
 	r.users.Set(user)
 }
 func (r *RoomInstance) DelUser(userID uint64) {
@@ -67,6 +87,7 @@ func (r *RoomRepositoryImpl) Create(room *RoomInstance) error {
 		return errors.Trace(err)
 	}
 	room.isCreated = true
+	users.New(room.ID)
 	return nil
 }
 
@@ -90,7 +111,7 @@ func (r *RoomRepositoryImpl) FindByID(id string) (*RoomInstance, error) {
 	if room == nil {
 		return nil, errors.NewNotFound(nil, id)
 	}
-	instance := NewRoomInstance(room)
+	instance := NewRoomInstance(room, users.Get(id))
 	instance.isCreated = true
 	return instance, nil
 }

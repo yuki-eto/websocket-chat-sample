@@ -1,9 +1,9 @@
 package dao
 
 import (
-	"sync"
 	"websocket-chat-sample/entity"
 
+	"github.com/cornelk/hashmap"
 	"github.com/juju/errors"
 )
 
@@ -15,14 +15,14 @@ type UserRoomDao interface {
 }
 
 type UserRoomDaoImpl struct {
-	userRooms *sync.Map
+	userRooms *hashmap.HashMap
 }
 
 var userRoomDao *UserRoomDaoImpl
 
 func init() {
 	userRoomDao = &UserRoomDaoImpl{
-		userRooms: new(sync.Map),
+		userRooms: new(hashmap.HashMap),
 	}
 }
 
@@ -37,7 +37,7 @@ func (u *UserRoomDaoImpl) Create(userRoom *entity.UserRoom) error {
 		return errors.NewAlreadyExists(nil, "already created user_room")
 	}
 
-	u.userRooms.Store(userRoom.UserID, userRoom)
+	u.userRooms.Set(userRoom.UserID, userRoom)
 	return nil
 }
 
@@ -46,12 +46,12 @@ func (u *UserRoomDaoImpl) Update(userRoom *entity.UserRoom) error {
 }
 
 func (u *UserRoomDaoImpl) Delete(userID uint64) error {
-	u.userRooms.Delete(userID)
+	u.userRooms.Del(userID)
 	return nil
 }
 
 func (u *UserRoomDaoImpl) FindByUserID(userID uint64) (*entity.UserRoom, error) {
-	uRoom, ok := u.userRooms.Load(userID)
+	uRoom, ok := u.userRooms.Get(userID)
 	if !ok {
 		return nil, nil
 	}

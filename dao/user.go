@@ -4,6 +4,7 @@ import (
 	"sync"
 	"websocket-chat-sample/entity"
 
+	"github.com/cornelk/hashmap"
 	"github.com/juju/errors"
 )
 
@@ -15,8 +16,8 @@ type UserDao interface {
 }
 
 type UserDaoImpl struct {
-	users       *sync.Map
-	userByToken *sync.Map
+	users       *hashmap.HashMap
+	userByToken *hashmap.HashMap
 
 	sequence    uint64
 	sequenceMtx *sync.Mutex
@@ -26,8 +27,8 @@ var userDao *UserDaoImpl
 
 func init() {
 	userDao = &UserDaoImpl{
-		users:       new(sync.Map),
-		userByToken: new(sync.Map),
+		users:       &hashmap.HashMap{},
+		userByToken: &hashmap.HashMap{},
 
 		sequence:    0,
 		sequenceMtx: new(sync.Mutex),
@@ -52,8 +53,8 @@ func (u *UserDaoImpl) Create(user *entity.User) error {
 	}
 
 	user.ID = u.sequenceID()
-	u.users.Store(user.ID, user)
-	u.userByToken.Store(user.LoginToken, user)
+	u.users.Set(user.ID, user)
+	u.userByToken.Set(user.LoginToken, user)
 	return nil
 }
 
@@ -62,7 +63,7 @@ func (u *UserDaoImpl) Update(user *entity.User) error {
 }
 
 func (u *UserDaoImpl) FindByID(id uint64) (*entity.User, error) {
-	user, ok := u.users.Load(id)
+	user, ok := u.users.Get(id)
 	if !ok {
 		return nil, nil
 	}
@@ -70,7 +71,7 @@ func (u *UserDaoImpl) FindByID(id uint64) (*entity.User, error) {
 }
 
 func (u *UserDaoImpl) FindByToken(token string) (*entity.User, error) {
-	user, ok := u.userByToken.Load(token)
+	user, ok := u.userByToken.Get(token)
 	if !ok {
 		return nil, nil
 	}

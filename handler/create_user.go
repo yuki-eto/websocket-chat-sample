@@ -54,7 +54,7 @@ func (c *CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user := repository.NewUserInstance(&entity.User{
 		Name:       req.Name,
 		LoginToken: loginToken,
-	})
+	}, nil)
 	if err := c.user.Save(user); err != nil {
 		res := &Response{
 			&response.ErrorResponse{Error: err},

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"websocket-chat-sample/repository"
 	"websocket-chat-sample/response"
@@ -11,18 +10,19 @@ import (
 )
 
 type Login struct {
-	user repository.UserRepository
+	user     repository.UserRepository
+	userRoom repository.UserRoomRepository
 }
 
 func NewLoginHandler() http.Handler {
 	return &Login{
-		user: repository.NewUserRepository(),
+		user:     repository.NewUserRepository(),
+		userRoom: repository.NewUserRoomRepository(),
 	}
 }
 
 func (h *Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	token := r.Header.Get(HeaderAuthToken)
-	log.Printf("login_token: %s", token)
 
 	user, err := h.user.FindByToken(token)
 	if err != nil {
@@ -56,8 +56,19 @@ func (h *Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := &Response{
-		&response.Login{AccessToken: accessToken},
+	userRoom, err := h.userRoom.FindByUserID(user.ID)
+	if err != nil && !errors.IsNotFound(err) {
+		res := &Response{
+			&response.ErrorResponse{Error: err},
+		}
+		res.InternalError(w)
+		return
+	}
+
+	body := &response.Login{AccessToken: accessToken}
+	res := &Response{body: body}
+	if userRoom != nil {
+		body.JoinedRoomID = userRoom.RoomID
 	}
 	res.Ok(w)
 }

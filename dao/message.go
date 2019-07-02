@@ -5,37 +5,38 @@ import (
 	"sync"
 	"websocket-chat-sample/entity"
 
+	"github.com/cornelk/hashmap"
 	"github.com/juju/errors"
 )
 
 type MessagesStore struct {
-	storeByRoom *sync.Map
-	mtxByRoom   *sync.Map
+	storeByRoom *hashmap.HashMap
+	mtxByRoom   *hashmap.HashMap
 }
 
 func NewMessageStore() *MessagesStore {
 	return &MessagesStore{
-		storeByRoom: new(sync.Map),
-		mtxByRoom:   new(sync.Map),
+		storeByRoom: &hashmap.HashMap{},
+		mtxByRoom:   &hashmap.HashMap{},
 	}
 }
 func (m *MessagesStore) New(roomID string) {
-	if _, exists := m.storeByRoom.Load(roomID); !exists {
-		m.storeByRoom.Store(roomID, list.New())
+	if _, exists := m.storeByRoom.Get(roomID); !exists {
+		m.storeByRoom.Set(roomID, list.New())
 	}
-	if _, exists := m.mtxByRoom.Load(roomID); !exists {
-		m.mtxByRoom.Store(roomID, new(sync.RWMutex))
+	if _, exists := m.mtxByRoom.Get(roomID); !exists {
+		m.mtxByRoom.Set(roomID, new(sync.RWMutex))
 	}
 }
 func (m *MessagesStore) getList(roomID string) *list.List {
-	l, ok := m.storeByRoom.Load(roomID)
+	l, ok := m.storeByRoom.Get(roomID)
 	if !ok {
 		return nil
 	}
 	return l.(*list.List)
 }
 func (m *MessagesStore) getMutex(roomID string) *sync.RWMutex {
-	mtx, ok := m.mtxByRoom.Load(roomID)
+	mtx, ok := m.mtxByRoom.Get(roomID)
 	if !ok {
 		return nil
 	}
@@ -79,8 +80,8 @@ func (m *MessagesStore) List(roomID string) (list []*entity.Message, err error) 
 	return list, nil
 }
 func (m *MessagesStore) Delete(roomID string) error {
-	m.storeByRoom.Delete(roomID)
-	m.mtxByRoom.Delete(roomID)
+	m.storeByRoom.Del(roomID)
+	m.mtxByRoom.Del(roomID)
 	return nil
 }
 

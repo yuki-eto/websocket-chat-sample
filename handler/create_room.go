@@ -52,12 +52,12 @@ func (h *CreateRoom) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	room := repository.NewRoomInstance(&entity.Room{
 		ID:   req.RoomID,
 		Name: "",
-	})
-	if err := h.room.Save(room); err != nil {
-		res := &Response{
-			&response.ErrorResponse{Error: err},
-		}
+	}, nil)
+	if err := h.room.Create(room); err != nil {
+		errBody := &response.ErrorResponse{Error: err}
+		res := &Response{errBody}
 		if errors.IsAlreadyExists(err) {
+			errBody.Code = response.ErrorCodeAlreadyExistRoom
 			res.BadRequest(w)
 		} else {
 			res.InternalError(w)

@@ -24,33 +24,37 @@ func (r *Response) response(code int, w http.ResponseWriter) {
 }
 
 func (r *Response) Ok(w http.ResponseWriter) {
-	r.response(200, w)
+	r.response(http.StatusOK, w)
 }
 
 func (r *Response) NoContent(w http.ResponseWriter) {
-	w.WriteHeader(204)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (r *Response) BadRequest(w http.ResponseWriter) {
-	r.response(400, w)
+	r.response(http.StatusBadRequest, w)
 }
 
 func (r *Response) Unauthorized(w http.ResponseWriter) {
-	r.response(401, w)
+	r.response(http.StatusUnauthorized, w)
 }
 
 func (r *Response) Forbidden(w http.ResponseWriter) {
-	r.response(403, w)
+	r.response(http.StatusForbidden, w)
 }
 
 func (r *Response) NotFound(w http.ResponseWriter) {
-	r.response(404, w)
+	r.response(http.StatusNotFound, w)
+}
+
+func (r *Response) Conflict(w http.ResponseWriter) {
+	r.response(http.StatusConflict, w)
 }
 
 func (r *Response) InternalError(w http.ResponseWriter) {
-	r.response(500, w)
+	r.response(http.StatusInternalServerError, w)
 }
 
 func (r *Response) Unavailable(w http.ResponseWriter) {
-	r.response(503, w)
+	r.response(http.StatusServiceUnavailable, w)
 }

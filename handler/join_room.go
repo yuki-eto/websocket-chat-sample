@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
+	"websocket-chat-sample/entity"
 	"websocket-chat-sample/repository"
 	"websocket-chat-sample/request"
 	"websocket-chat-sample/response"
@@ -70,6 +72,21 @@ func (h *JoinRoom) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res.InternalError(w)
 		return
 	}
+
+	now := time.Now()
+	userRoom = repository.NewUserRoomInstance(&entity.UserRoom{
+		UserID:   user.ID,
+		RoomID:   room.ID,
+		JoinedAt: &now,
+	})
+	if err := h.userRoom.Save(userRoom); err != nil {
+		res := &Response{
+			&response.ErrorResponse{Error: err},
+		}
+		res.InternalError(w)
+		return
+	}
+
 	messages, err := h.message.FindByRoomID(roomID)
 	if err != nil {
 		res := &Response{
@@ -79,7 +96,7 @@ func (h *JoinRoom) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	room.AddUser(user)
+	room.SetUser(user)
 
 	msg := &response.Stream{
 		Type: response.StreamTypeJoin,

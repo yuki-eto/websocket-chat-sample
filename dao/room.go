@@ -1,9 +1,9 @@
 package dao
 
 import (
-	"sync"
 	"websocket-chat-sample/entity"
 
+	"github.com/cornelk/hashmap"
 	"github.com/juju/errors"
 )
 
@@ -15,14 +15,14 @@ type RoomDao interface {
 }
 
 type RoomDaoImpl struct {
-	rooms *sync.Map
+	rooms *hashmap.HashMap
 }
 
 var roomDao *RoomDaoImpl
 
 func init() {
 	roomDao = &RoomDaoImpl{
-		rooms: new(sync.Map),
+		rooms: &hashmap.HashMap{},
 	}
 }
 
@@ -35,7 +35,7 @@ func (r *RoomDaoImpl) Create(room *entity.Room) error {
 		return errors.NewAlreadyExists(nil, room.ID)
 	}
 
-	r.rooms.Store(room.ID, room)
+	r.rooms.Set(room.ID, room)
 	return nil
 }
 
@@ -44,12 +44,12 @@ func (r *RoomDaoImpl) Update(room *entity.Room) error {
 }
 
 func (r *RoomDaoImpl) Delete(roomID string) error {
-	r.rooms.Delete(roomID)
+	r.rooms.Del(roomID)
 	return nil
 }
 
 func (r *RoomDaoImpl) FindByID(id string) (*entity.Room, error) {
-	room, ok := r.rooms.Load(id)
+	room, ok := r.rooms.Get(id)
 	if !ok {
 		return nil, nil
 	}
