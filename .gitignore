@@ -12,3 +12,9 @@
 *.out
 
 .idea
+
+# frontend
+
+view/node_modules
+view/public
+
