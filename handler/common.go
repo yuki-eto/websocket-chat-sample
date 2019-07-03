@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	HeaderContentType = "content-type"
 	HeaderAuthToken   = "x-authenticate-token"
 	HeaderAccessToken = "x-access-token"
 )
