@@ -69,7 +69,11 @@ func (h *JoinRoom) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res := &Response{
 			&response.ErrorResponse{Error: err},
 		}
-		res.InternalError(w)
+		if errors.IsNotFound(err) {
+			res.NotFound(w)
+		} else {
+			res.InternalError(w)
+		}
 		return
 	}
 

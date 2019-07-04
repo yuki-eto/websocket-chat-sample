@@ -4,7 +4,7 @@ import "time"
 
 type Message struct {
 	RoomID string     `json:"-"`
-	UserID uint64     `json:"user_id"`
+	Name   string     `json:"name"`
 	Text   string     `json:"text"`
 	Time   *time.Time `json:"time"`
 }

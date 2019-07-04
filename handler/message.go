@@ -70,7 +70,7 @@ func (h *Message) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	msg := &entity.Message{
 		RoomID: roomID,
-		UserID: user.ID,
+		Name:   user.Name,
 		Text:   req.Text,
 		Time:   &now,
 	}

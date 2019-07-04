@@ -37,16 +37,15 @@ func (h *ActivateWebSocket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		res := &Response{
-			&response.ErrorResponse{Error: err},
-		}
-		res.InternalError(w)
+		log.Printf("error: %+v", err)
 		return
 	}
 
-	tick := time.NewTicker(time.Second * 10)
+	const pongWait = 10 * time.Second
+	const pingPeriod = 5 * time.Second
+	tick := time.NewTicker(pingPeriod)
 	conn.SetCloseHandler(func(code int, text string) error {
-		log.Printf("close: %d, %s", code, text)
+		log.Printf("close: %d(%d)", user.ID, code)
 		tick.Stop()
 		return nil
 	})
@@ -58,13 +57,28 @@ func (h *ActivateWebSocket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if !ok {
 					return
 				}
-				if err := conn.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
-					log.Printf("ping error: %+v", err)
+				if err := conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 					conn.Close()
 					return
 				}
-			default:
+				if err := conn.WriteMessage(websocket.TextMessage, []byte("ping")); err != nil {
+					conn.Close()
+					return
+				}
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
 				return
+			}
+			if string(msg) == "pong" {
+				if err := conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+					return
+				}
 			}
 		}
 	}()
