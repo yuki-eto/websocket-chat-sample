@@ -3,11 +3,13 @@ import * as ReactDOM from "react-dom";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import { Container, Typography, Avatar } from "@material-ui/core";
 import { createStyles } from "@material-ui/styles";
-
 import { Provider } from "react-redux";
-import Form from "./components/form";
-import { setupStore } from "./store";
 import withStyles, {WithStyles, StyleRules} from "@material-ui/core/styles/withStyles";
+
+import { setupStore } from "./store";
+import Streams from "./components/streams";
+import Form from "./components/form";
+import withRoot from "./utils/with_root";
 
 const store = setupStore();
 
@@ -28,11 +30,12 @@ const App: React.FC<IProps> = ({ classes }: IProps) => {
       <div className={classes.root}>
         <Typography component="h1" variant="h2">WebSocket Chat</Typography>
         <Form />
+        <Streams />
       </div>
     </Container>
   );
 };
-const AppWithStyle = withStyles(styles)(App);
+const AppWithStyle = withRoot(withStyles(styles)(App));
 
 ReactDOM.render(
   <Provider store={store}><AppWithStyle /></Provider>,

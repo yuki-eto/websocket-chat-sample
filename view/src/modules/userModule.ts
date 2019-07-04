@@ -8,11 +8,12 @@ interface IUser {
 }
 
 export interface IUserState {
-  user: IUser | null;
   isLoading: boolean;
   isLoaded: boolean;
   isError: boolean;
   isLogin: boolean;
+  isSocketConnected: boolean;
+  user: IUser | null;
 }
 
 const initialState: IUserState = {
@@ -20,6 +21,7 @@ const initialState: IUserState = {
   isLoaded: false,
   isLoading: false,
   isLogin: false,
+  isSocketConnected: false,
   user: {
     name: "",
     loginToken: "",
@@ -51,10 +53,17 @@ const userModule = createSlice({
     setName: (state: IUserState, action: PayloadAction<string>) => {
       state.user.name = action.payload;
     },
+    socketConnected: (state: IUserState) => {
+      state.isSocketConnected = true;
+    },
+    socketDisconnected: (state: IUserState) => {
+      state.isSocketConnected = false;
+    },
   },
 });
 
 export const { actions: userActions } = userModule;
+export default userModule;
 
 export const createUser = () => {
   return async (dispatch, getState) => {
@@ -63,8 +72,8 @@ export const createUser = () => {
       return;
     }
 
+    dispatch(userActions.initializeState());
     try {
-      dispatch(userActions.initializeState());
       const createResponse = await create(userState.user.name);
       if (createResponse.status !== 200) {
         dispatch(userActions.loadedState({ isLoaded: true, isError: true }));
@@ -116,5 +125,3 @@ export const loginUser = () => {
     }
   };
 };
-
-export default userModule;

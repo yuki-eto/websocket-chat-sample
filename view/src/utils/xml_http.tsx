@@ -1,5 +1,3 @@
-import { Error } from "tslint/lib/error";
-
 export enum HTTPMethods {
   Get = "GET",
   Post = "POST",

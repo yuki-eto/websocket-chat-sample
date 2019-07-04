@@ -15,7 +15,7 @@ interface IProps extends WithStyles<typeof styles> {
 
 const Form: React.FC<IProps> = ({ classes }: IProps) => {
   return (
-    <form className={classes.form}>
+    <form className={classes.form} onSubmit={(e) => e.preventDefault()}>
       <UserName />
     </form>
   );
