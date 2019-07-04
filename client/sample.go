@@ -112,15 +112,14 @@ func (c *Client) HandleWebsocket() error {
 			}
 		}()
 
-		i := 0
 		for {
-			i++
-			log.Printf("loop: %d", i)
-
 			_, b, err := conn.ReadMessage()
 			if err != nil {
 				log.Printf("error: %+v", err)
 				return
+			}
+			if string(b) == "ping" {
+				continue
 			}
 			log.Printf(string(b))
 			c.streams = append(c.streams, string(b))
