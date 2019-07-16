@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 	"websocket-chat-sample/handler"
 
 	"github.com/gorilla/handlers"
@@ -31,14 +36,32 @@ func main() {
 	handleFunc("/websocket", handler.NewActivateWebsocketHandler(upgrader))
 
 	addr := fmt.Sprintf("%s:%d", "0.0.0.0", 19999)
-	log.Printf("start server on %s", addr)
 	serv := &http.Server{
 		Handler: httpHandler(router),
 		Addr:    addr,
 	}
-	if err := serv.ListenAndServe(); err != nil {
+
+	go func() {
+		log.Printf("start server on %s", addr)
+		if err := serv.ListenAndServe(); err != nil {
+			if err != http.ErrServerClosed {
+				log.Printf("error: %+v", err)
+			}
+		}
+	}()
+
+	signalCh := make(chan os.Signal)
+	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
+	log.Printf("received signal: %v", <-signalCh)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	log.Printf("shutdown: %s", addr)
+	if err := serv.Shutdown(ctx); err != nil {
 		panic(err)
 	}
+
+	log.Print("complete!")
 }
 
 func httpHandler(router *mux.Router) http.Handler {

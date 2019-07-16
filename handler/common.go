@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"websocket-chat-sample/repository"
 	"websocket-chat-sample/response"
@@ -26,8 +25,6 @@ func GetUser(w http.ResponseWriter, r *http.Request, userRepo repository.UserRep
 	if accessToken == "" {
 		accessToken = r.FormValue(FormAccessToken)
 	}
-
-	log.Printf("login: %s, access: %s", loginToken, accessToken)
 
 	user, err := userRepo.FindByToken(loginToken)
 	if err != nil {
