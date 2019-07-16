@@ -118,7 +118,12 @@ func (c *Client) HandleWebsocket() error {
 				log.Printf("error: %+v", err)
 				return
 			}
+
 			if string(b) == "ping" {
+				if err := conn.WriteMessage(websocket.TextMessage, []byte("pong")); err != nil {
+					log.Printf("pong error: %+v", err)
+					return
+				}
 				continue
 			}
 			log.Printf(string(b))

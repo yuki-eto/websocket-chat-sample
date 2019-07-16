@@ -41,28 +41,48 @@ func (h *ActivateWebSocket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	const writeWait = 10 * time.Second
 	const pongWait = 10 * time.Second
-	const pingPeriod = 5 * time.Second
+	const pingPeriod = (pongWait * 9) / 10
 	tick := time.NewTicker(pingPeriod)
 	conn.SetCloseHandler(func(code int, text string) error {
 		log.Printf("close: %d(%d)", user.ID, code)
 		tick.Stop()
+
+		userRoom, err := h.userRoom.FindByUserID(user.ID)
+		if err != nil && !errors.IsNotFound(err) {
+			return errors.Trace(err)
+		}
+		if userRoom == nil {
+			return nil
+		}
+		room, err := h.room.FindByID(userRoom.RoomID)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		room.DelUser(user.ID)
+		if len(room.ListUsers()) > 0 {
+			room.Broadcast(&response.Stream{
+				Type: response.StreamTypeLeave,
+				User: user,
+			})
+		}
 		return nil
 	})
 
 	go func() {
+		defer conn.Close()
+
 		for {
 			select {
 			case _, ok := <-tick.C:
 				if !ok {
 					return
 				}
-				if err := conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-					conn.Close()
+				if err := conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
 					return
 				}
 				if err := conn.WriteMessage(websocket.TextMessage, []byte("ping")); err != nil {
-					conn.Close()
 					return
 				}
 			}
@@ -70,11 +90,23 @@ func (h *ActivateWebSocket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go func() {
+		defer conn.Close()
+
+		if err := conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+			return
+		}
+
 		for {
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
+				if err == websocket.ErrReadLimit {
+					log.Printf("ping timeouted: %d", user.ID)
+				} else {
+					log.Printf("read err: %+v", err)
+				}
 				return
 			}
+
 			if string(msg) == "pong" {
 				if err := conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 					return
