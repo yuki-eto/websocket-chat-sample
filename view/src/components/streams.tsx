@@ -13,7 +13,7 @@ import Message from "./message";
 const styles = (theme: Theme): StyleRules => createStyles({
   root: {
     width: "100%",
-    maxWidth: 360,
+    maxWidth: 640,
     backgroundColor: theme.palette.background.paper,
   },
 });
@@ -45,6 +45,9 @@ const Streams: React.FC<IProps> = ({ classes }: IProps) => {
       case StreamType.Chat:
         const { message } = stream;
         return <Message key={key++} text={message.text} name={message.name} />;
+      case StreamType.Join:
+        const { user } = stream;
+        return <Message key={key++} text="Joined" name={user.name} />;
     }
   }).filter((stream) => stream !== null);
 

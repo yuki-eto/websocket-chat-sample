@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "redux-starter-kit";
-import { join } from "../requests/room";
+import { join, message } from "../requests/room";
 
 export enum StreamType {
   Chat = "chat",
@@ -36,6 +36,7 @@ export interface IRoomState {
   room: IRoom;
   users: {[key: string]: IUser};
   streams: IStream[];
+  message: string;
 }
 
 const initialState = {
@@ -45,6 +46,7 @@ const initialState = {
   room: {},
   users: {},
   streams: [],
+  message: "",
 };
 
 const roomModule = createSlice({
@@ -55,6 +57,11 @@ const roomModule = createSlice({
       state.room = null;
       state.users = {};
       state.streams = [];
+      state.isLoading = false;
+      state.isLoaded = false;
+      state.isError = false;
+    },
+    initializeLoadingState: (state: IRoomState) => {
       state.isLoading = false;
       state.isLoaded = false;
       state.isError = false;
@@ -91,6 +98,9 @@ const roomModule = createSlice({
     leaveUser: (state: IRoomState, action: PayloadAction<IUser>) => {
       delete state.users[action.payload.id];
     },
+    setMessage: (state: IRoomState, action: PayloadAction<string>) => {
+      state.message = action.payload;
+    },
   },
 });
 
@@ -119,6 +129,32 @@ export const joinRoom = () => {
       dispatch(roomActions.setRoom(data.room));
       dispatch(roomActions.setUsers(data.users));
       dispatch(roomActions.setMessages(data.messages));
+      dispatch(roomActions.loadedState({ isLoaded: true, isError: false }));
+    } catch (e) {
+      console.error(e);
+      dispatch(roomActions.loadedState({ isLoaded: true, isError: true }));
+    }
+  };
+};
+
+export const sendMessage = () => {
+  return async (dispatch, getState) => {
+    const state = getState();
+    const { room: roomState } = state;
+    if (roomState.isLoading || !roomState.room || !roomState.room.id || !roomState.message) {
+      return;
+    }
+
+    const { loginToken, accessToken } = state.user.user;
+    dispatch(roomActions.initializeLoadingState());
+    dispatch(roomActions.setMessage(""));
+    try {
+      const resp = await message(loginToken, accessToken, roomState.message);
+      const { status } = resp;
+      if (status !== 200) {
+        dispatch(roomActions.loadedState({ isLoaded: true, isError: true }));
+        return;
+      }
       dispatch(roomActions.loadedState({ isLoaded: true, isError: false }));
     } catch (e) {
       console.error(e);

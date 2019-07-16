@@ -3,8 +3,8 @@ import {useDispatch, useSelector} from "react-redux";
 import {TextField, Button, Theme, WithStyles} from "@material-ui/core";
 import {StyleRules, createStyles} from "@material-ui/core/styles";
 
+import {roomActions, sendMessage} from "../modules/roomModule";
 import {IRootState} from "../modules";
-import {userActions, createUser} from "../modules/userModule";
 import withStyles from "@material-ui/core/styles/withStyles";
 import {FormEvent} from "react";
 
@@ -16,45 +16,50 @@ const styles = (theme: Theme): StyleRules => createStyles({
 interface IProps extends WithStyles<typeof styles> {
 }
 
-const UserName: React.FC<IProps> = ({ classes }: IProps) => {
+const Chat: React.FC<IProps> = ({ classes }: IProps) => {
   const dispatch = useDispatch();
-  const userState = useSelector((state: IRootState) => state.user);
+  const roomState = useSelector((state: IRootState) => state.room);
+
+  if (!roomState.room || !roomState.room.id) {
+    return null;
+  }
+
   const textFieldProps = {
-    label: "Name",
-    value: userState.user.name,
+    label: "Message",
+    value: roomState.message,
     onChange: (e) => {
       const { value } = e.target;
-      dispatch(userActions.setName(value));
+      dispatch(roomActions.setMessage(value));
     },
   };
-  const handleLoginBtn = (e: FormEvent) => {
+  const handleSendBtn = (e: FormEvent) => {
     if (e) {
       e.preventDefault();
     }
-    dispatch(createUser());
+    dispatch(sendMessage());
   };
 
   return (
-    <form className={classes.form} onSubmit={(e) => handleLoginBtn(e)}>
+    <form className={classes.form} onSubmit={(e) => handleSendBtn(e)}>
       <TextField
         {...textFieldProps}
         variant="outlined"
         margin="normal"
         fullWidth
         required
-        disabled={userState.isLogin || userState.isLoading}
+        disabled={roomState.isLoading}
       />
       <Button
         color="primary"
         variant="contained"
+        onClick={() => handleSendBtn(null)}
         fullWidth
-        onClick={() => handleLoginBtn(null)}
-        disabled={userState.isLogin || userState.isLoading || !userState.user.name}
+        disabled={!roomState.message}
       >
-        Login
+        Send
       </Button>
     </form>
   );
 };
 
-export default withStyles(styles)(UserName);
+export default withStyles(styles)(Chat);

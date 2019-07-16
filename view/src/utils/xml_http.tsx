@@ -23,7 +23,11 @@ export default class XMLHttp {
       }
       req.onreadystatechange = () => {
         if (req.readyState === XMLHttpRequest.DONE) {
-          resolve({ status: req.status, data: JSON.parse(req.responseText) });
+          let responseData = {};
+          if (req.status === 200) {
+            responseData = JSON.parse(req.responseText);
+          }
+          resolve({ status: req.status, data: responseData });
         }
       };
       req.onerror = () => {

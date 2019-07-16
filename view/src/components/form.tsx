@@ -1,24 +1,15 @@
 import * as React from "react";
-import withStyles, {StyleRules, WithStyles} from "@material-ui/styles/withStyles/withStyles";
-import {createStyles, Theme} from "@material-ui/core/styles";
 
 import UserName from "./user_name";
+import Chat from "./chat";
 
-const styles = (theme: Theme): StyleRules => createStyles({
-  form: {
-    width: "100%",
-  },
-});
-
-interface IProps extends WithStyles<typeof styles> {
-}
-
-const Form: React.FC<IProps> = ({ classes }: IProps) => {
+const Form: React.FC<{}> = () => {
   return (
-    <form className={classes.form} onSubmit={(e) => e.preventDefault()}>
+    <>
       <UserName />
-    </form>
+      <Chat />
+    </>
   );
 };
 
-export default withStyles(styles)(Form);
+export default Form;
