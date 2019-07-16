@@ -71,7 +71,7 @@ func (m *MessagesStore) List(roomID string) (list []*entity.Message, err error) 
 	}
 
 	mtx.RLock()
-	for elm := store.Front(); elm != nil; elm = elm.Next() {
+	for elm := store.Back(); elm != nil; elm = elm.Prev() {
 		msg := elm.Value.(*entity.Message)
 		list = append(list, msg)
 	}

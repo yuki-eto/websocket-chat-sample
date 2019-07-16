@@ -102,11 +102,10 @@ func (h *JoinRoom) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	room.SetUser(user)
 
-	msg := &response.Stream{
+	room.Broadcast(&response.Stream{
 		Type: response.StreamTypeJoin,
 		User: user,
-	}
-	room.Broadcast(msg)
+	})
 
 	res := &Response{
 		&response.JoinRoom{

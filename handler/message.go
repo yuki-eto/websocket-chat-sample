@@ -82,11 +82,10 @@ func (h *Message) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stream := &response.Stream{
+	room.Broadcast(&response.Stream{
 		Type:    response.StreamTypeChat,
 		Message: repository.NewMessageInstance(msg),
-	}
-	room.Broadcast(stream)
+	})
 
 	res := &Response{}
 	res.NoContent(w)

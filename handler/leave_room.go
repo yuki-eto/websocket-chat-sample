@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"websocket-chat-sample/repository"
 	"websocket-chat-sample/response"
@@ -82,21 +81,11 @@ func (h *LeaveRoom) LeaveRoom(room *repository.RoomInstance, user *repository.Us
 	list := room.ListUsers()
 
 	if len(list) > 0 {
-		msg := &response.Stream{
+		room.Broadcast(&response.Stream{
 			Type: response.StreamTypeLeave,
 			User: user,
-		}
-		room.Broadcast(msg)
-		return nil
+		})
 	}
 
-	// ルームを閉じる
-	log.Printf("close room: %s", room.ID)
-	if err := h.room.Delete(room); err != nil {
-		return errors.Trace(err)
-	}
-	if err := h.message.Delete(room.ID); err != nil {
-		return errors.Trace(err)
-	}
 	return nil
 }
