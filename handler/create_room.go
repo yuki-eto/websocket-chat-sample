@@ -52,7 +52,7 @@ func (h *CreateRoom) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	room := repository.NewRoomInstance(&entity.Room{
 		ID:   req.RoomID,
 		Name: "",
-	}, nil)
+	})
 	if err := h.room.Create(room); err != nil {
 		errBody := &response.ErrorResponse{Error: err}
 		res := &Response{errBody}
